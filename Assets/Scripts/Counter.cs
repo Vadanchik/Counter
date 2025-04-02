@@ -5,42 +5,12 @@ using UnityEngine;
 public class Counter : MonoBehaviour
 {
     [SerializeField] private float _delay = 0.5f;
-    [SerializeField] private MouseClick _input;
+    [SerializeField] private InputService _input;
 
-    public event Action ValueChanged;
+    public event Action<float> ValueChanged;
 
     private int _currentCount;
     private Coroutine _countCoroutine;
-    private bool _isCount = false;
-
-    public int Value => _currentCount;
-
-    private void ToogleCount()
-    {
-        if (_isCount)
-        {
-            _isCount = false;
-            StopCoroutine(_countCoroutine);
-        }
-        else
-        {
-            _isCount = true;
-            _countCoroutine = StartCoroutine(Count());
-        }
-    }
-
-    private IEnumerator Count()
-    {
-        WaitForSeconds wait = new WaitForSeconds(_delay);
-
-        while (_isCount)
-        {
-            yield return wait;
-
-            _currentCount++;
-            ValueChanged?.Invoke();
-        }
-    }
 
     private void OnEnable()
     {
@@ -50,5 +20,31 @@ public class Counter : MonoBehaviour
     private void OnDisable()
     {
         _input.OnClick -= ToogleCount;
+    }
+
+    private void ToogleCount()
+    {
+        if (_countCoroutine == null)
+        {
+            _countCoroutine = StartCoroutine(Count());
+        }
+        else
+        {
+            StopCoroutine(_countCoroutine);
+            _countCoroutine = null;
+        }
+    }
+
+    private IEnumerator Count()
+    {
+        WaitForSeconds wait = new WaitForSeconds(_delay);
+
+        while (enabled)
+        {
+            yield return wait;
+
+            _currentCount++;
+            ValueChanged?.Invoke(_currentCount);
+        }
     }
 }
